@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  backend:
+  back:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,7 +30,7 @@ jobs:
           path: backend/target/site/jacoco/
 
           
-  frontend:
+  front:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
