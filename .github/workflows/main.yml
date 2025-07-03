@@ -20,7 +20,7 @@ jobs:
           java-version: '17'
 
       - name: Build and test backend with coverage
-        working-directory: backend
+        working-directory: back
         run: mvn clean verify
 
       - name: Upload backend coverage report
@@ -36,17 +36,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Chrome dependencies for Karma
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libxss1 libasound2 libatk-bridge2.0-0 libgtk-3-0 libdrm2 libgbm1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: front
         run: npm ci
 
       - name: Test front + coverage
-        working-directory: frontend
+        working-directory: front
         run: npm run test
 
       - name: Upload frontend coverage
