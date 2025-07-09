@@ -29,37 +29,28 @@ jobs:
           name: backend-coverage
           path: back/target/site/jacoco/
 
-          
   front:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-  
-      - name: Install Chrome dependencies for Karma
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 \
-            libxss1 \
-            libatk-bridge2.0-0 \
-            libgtk-3-0 \
-            libdrm2 \
-            libgbm1
-  
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-  
+
       - name: Install dependencies
         working-directory: front
         run: npm ci
-  
+
       - name: Test front + coverage
         working-directory: front
-        run: npm run test
-  
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libxss1 libasound2 libx11-xcb1 libatk-bridge2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxi6 libgbm1 libpangocairo-1.0-0 libatspi2.0-0
+          npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
+
       - name: Upload frontend coverage
         uses: actions/upload-artifact@v4
         with:
@@ -99,8 +90,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=front/src,back/src
-            -Dsonar.tests=front/src,back/src/test
+            -Dsonar.tests=back/src/test
             -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
-
