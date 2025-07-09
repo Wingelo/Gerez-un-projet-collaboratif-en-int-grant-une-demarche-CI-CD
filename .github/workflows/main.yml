@@ -102,3 +102,4 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
+
