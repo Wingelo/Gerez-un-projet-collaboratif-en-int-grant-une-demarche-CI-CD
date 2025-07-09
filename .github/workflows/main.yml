@@ -23,6 +23,9 @@ jobs:
         working-directory: back
         run: mvn clean verify
 
+      - name: Debug backend build output
+        run: ls -R back/target
+
       - name: Upload backend coverage report
         uses: actions/upload-artifact@v4
         with:
