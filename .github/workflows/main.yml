@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  back:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build and test backend with coverage
+        working-directory: back
+        run: mvn clean verify
+
+      - name: Debug backend build output
+        run: ls -R back/target
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: back/target/site/jacoco/
+
+  front:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Test front + coverage
+        working-directory: front
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libxss1 \
+            libasound2t64 \
+            libx11-xcb1 \
+            libatk-bridge2.0-0 \
+            libgtk-3-0 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxi6 \
+            libgbm1 \
+            libpangocairo-1.0-0 \
+            libatspi2.0-0
+          npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: front/coverage/bobapp/
+
+  sonarqube:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [back, front]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build backend (required for sonar.java.binaries)
+        working-directory: back
+        run: mvn -B clean compile
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.sources=front/src,back/src/main
+            -Dsonar.exclusions=back/src/test/**
+            -Dsonar.tests=back/src/test
+            -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
+            -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
+            -Dsonar.java.binaries=back/target/classes
