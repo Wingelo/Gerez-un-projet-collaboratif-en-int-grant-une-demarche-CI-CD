@@ -91,12 +91,13 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
             -Dsonar.sources=front/src,back/src
             -Dsonar.tests=front/src,back/src/test
             -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
