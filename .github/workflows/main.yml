@@ -48,7 +48,20 @@ jobs:
         working-directory: front
         run: |
           sudo apt-get update
-          sudo apt-get install -y libnss3 libxss1 libasound2 libx11-xcb1 libatk-bridge2.0-0 libgtk-3-0 libxcomposite1 libxcursor1 libxdamage1 libxi6 libgbm1 libpangocairo-1.0-0 libatspi2.0-0
+          sudo apt-get install -y \
+            libnss3 \
+            libxss1 \
+            libasound2t64 \
+            libx11-xcb1 \
+            libatk-bridge2.0-0 \
+            libgtk-3-0 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxi6 \
+            libgbm1 \
+            libpangocairo-1.0-0 \
+            libatspi2.0-0
           npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
       - name: Upload frontend coverage
