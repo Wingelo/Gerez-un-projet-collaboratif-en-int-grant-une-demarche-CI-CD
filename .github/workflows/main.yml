@@ -72,3 +72,26 @@ jobs:
         with:
           name: frontend-coverage
           path: front/coverage/bobapp/
+  sonarqube:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [back, front]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build backend (required for sonar.java.binaries)
+        run: mvn -B clean compile
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
