@@ -69,7 +69,6 @@ jobs:
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    environment: TEST
     needs: [front, back]
     steps:
       - name: Checkout code
