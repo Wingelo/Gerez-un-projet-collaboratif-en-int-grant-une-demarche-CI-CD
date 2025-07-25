@@ -7,6 +7,31 @@ on:
     branches: [main]
 
 jobs:
+  back:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build and test backend with coverage
+        working-directory: back
+        run: mvn clean test
+
+      - name: Debug backend build output
+        run: ls -R back/target
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: back/target/site/jacoco/
+
   front:
     runs-on: ubuntu-latest
     steps:
@@ -19,13 +44,12 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: |
-          cd front
-          npm ci
+        working-directory: front
+        run: npm ci
 
       - name: Test front + coverage
+        working-directory: front
         run: |
-          cd front
           sudo apt-get update
           sudo apt-get install -y \
             libnss3 libxss1 libasound2t64 libx11-xcb1 \
@@ -34,38 +58,55 @@ jobs:
             libpangocairo-1.0-0 libatspi2.0-0
           npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: front/coverage/bobapp/
+
   sonarqube:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    needs: [front]
+    needs: [back, front]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: back/target/site/jacoco
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: front/coverage/bobapp
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Build & test backend with coverage
+      - name: Build backend (required for sonar.java.binaries)
         working-directory: back
-        run: |
-          mvn clean test
+        run: mvn -B clean compile
 
-      - name: Debug JaCoCo XML
+      - name: Check JaCoCo XML
         run: |
           echo "== Checking JaCoCo XML report =="
           ls -R back/target/site/jacoco || echo "No JaCoCo directory"
-          cat back/target/site/jacoco/jacoco.xml | head -10 || echo "jacoco.xml missing"
+          cat back/target/site/jacoco/jacoco.xml | head -20 || echo "jacoco.xml missing"
 
-      - name: Debug LCOV report
+      - name: Check LCOV
         run: |
           echo "== Checking LCOV report =="
-          ls -R front/coverage || echo "No front coverage directory"
-          cat front/coverage/*/lcov.info | head -10 || echo "lcov.info missing"
+          ls -R front/coverage || echo "No coverage directory"
+          cat front/coverage/*/lcov.info | head -20 || echo "lcov.info missing"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
@@ -77,8 +118,9 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=front/src,back/src/main
-            -Dsonar.tests=back/src/test,front/src/app/**/*.spec.ts
+            -Dsonar.tests=back/src/test,front/src/app
             -Dsonar.exclusions=back/src/test/**
+            -Dsonar.test.inclusions=front/src/app/**/*.spec.ts
             -Dsonar.javascript.lcov.reportPaths=front/coverage/*/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
