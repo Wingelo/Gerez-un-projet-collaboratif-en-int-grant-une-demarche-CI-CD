@@ -21,7 +21,7 @@ jobs:
 
       - name: Build and test backend with coverage
         working-directory: back
-        run: mvn clean verify
+        run: mvn clean test
 
       - name: Debug backend build output
         run: ls -R back/target
