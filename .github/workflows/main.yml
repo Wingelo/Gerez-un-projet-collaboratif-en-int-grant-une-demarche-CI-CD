@@ -101,7 +101,7 @@ jobs:
 
       - name: Build backend (required for sonar.java.binaries)
         working-directory: back
-        run: mvn -B clean compile
+        run: mvn -B compile
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
