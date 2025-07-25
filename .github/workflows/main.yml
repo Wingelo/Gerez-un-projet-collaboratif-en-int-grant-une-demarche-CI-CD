@@ -105,7 +105,7 @@ jobs:
             -Dsonar.sources=front/src,back/src/main
             -Dsonar.exclusions=back/src/test/**
             -Dsonar.tests=back/src/test
-            -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=front/coverage/*/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
   docker:
