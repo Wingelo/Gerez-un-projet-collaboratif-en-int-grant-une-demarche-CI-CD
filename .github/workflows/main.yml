@@ -8,6 +8,7 @@ on:
 
 jobs:
   back:
+    name: Build & Test Backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,15 +17,20 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Build and test backend with coverage
+      - name: Build and test backend with JaCoCo
         working-directory: back
         run: mvn clean test
 
-      - name: Debug backend build output
-        run: ls -R back/target
+      - name: Verify JaCoCo XML exists
+        working-directory: back
+        run: |
+          echo "== Listing coverage directory =="
+          ls -R target/site/jacoco
+          echo "== Showing start of jacoco.xml =="
+          head -n 20 target/site/jacoco/jacoco.xml
 
       - name: Upload backend coverage report
         uses: actions/upload-artifact@v4
