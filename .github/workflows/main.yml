@@ -8,7 +8,6 @@ on:
 
 jobs:
   back:
-    name: Build & Test Backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,20 +16,15 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Build and test backend with JaCoCo
+      - name: Build and test backend with coverage
         working-directory: back
-        run: mvn clean test
+        run: mvn clean verify
 
-      - name: Verify JaCoCo XML exists
-        working-directory: back
-        run: |
-          echo "== Listing coverage directory =="
-          ls -R target/site/jacoco
-          echo "== Showing start of jacoco.xml =="
-          head -n 20 target/site/jacoco/jacoco.xml
+      - name: Debug backend build output
+        run: ls -R back/target
 
       - name: Upload backend coverage report
         uses: actions/upload-artifact@v4
@@ -39,7 +33,6 @@ jobs:
           path: back/target/site/jacoco/
 
   front:
-    name: Build & Test Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -54,15 +47,24 @@ jobs:
         working-directory: front
         run: npm ci
 
-      - name: Run Angular tests + coverage
+      - name: Test front + coverage
         working-directory: front
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libnss3 libxss1 libasound2t64 libx11-xcb1 \
-            libatk-bridge2.0-0 libgtk-3-0 libxcomposite1 \
-            libxcursor1 libxdamage1 libxi6 libgbm1 \
-            libpangocairo-1.0-0 libatspi2.0-0
+            libnss3 \
+            libxss1 \
+            libasound2t64 \
+            libx11-xcb1 \
+            libatk-bridge2.0-0 \
+            libgtk-3-0 \
+            libxcomposite1 \
+            libxcursor1 \
+            libxdamage1 \
+            libxi6 \
+            libgbm1 \
+            libpangocairo-1.0-0 \
+            libatspi2.0-0
           npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
       - name: Upload frontend coverage
@@ -81,22 +83,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download backend coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-coverage
-          path: back/target/site/jacoco
-
-      - name: Download frontend coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-coverage
-          path: front/coverage/bobapp
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Build backend (required for sonar.java.binaries)
@@ -113,14 +103,11 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=front/src,back/src/main
-            -Dsonar.tests=back/src/test,front/src/app
             -Dsonar.exclusions=back/src/test/**
-            -Dsonar.test.inclusions=front/src/app/**/*.spec.ts
+            -Dsonar.tests=back/src/test
             -Dsonar.javascript.lcov.reportPaths=front/coverage/*/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
-            -Dsonar.verbose=true
-
   docker:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
