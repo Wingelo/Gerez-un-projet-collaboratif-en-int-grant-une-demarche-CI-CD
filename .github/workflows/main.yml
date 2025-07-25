@@ -54,7 +54,7 @@ jobs:
         working-directory: front
         run: npm ci
 
-      - name: Test front + coverage
+      - name: Run Angular tests + coverage
         working-directory: front
         run: |
           sudo apt-get update
@@ -96,7 +96,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Build backend (required for sonar.java.binaries)
