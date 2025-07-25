@@ -93,7 +93,7 @@ jobs:
 
       - name: Compile backend (pour sonar.java.binaries)
         working-directory: back
-        run: mvn -B compile
+        run: mvn clean compile test jacoco:report
 
       - name: Copy backend dependencies for Sonar
         working-directory: back
