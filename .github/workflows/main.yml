@@ -39,6 +39,7 @@ jobs:
           path: back/target/site/jacoco/
 
   front:
+    name: Build & Test Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -101,18 +102,6 @@ jobs:
       - name: Build backend (required for sonar.java.binaries)
         working-directory: back
         run: mvn -B clean compile
-
-      - name: Check JaCoCo XML
-        run: |
-          echo "== Checking JaCoCo XML report =="
-          ls -R back/target/site/jacoco || echo "No JaCoCo directory"
-          cat back/target/site/jacoco/jacoco.xml | head -20 || echo "jacoco.xml missing"
-
-      - name: Check LCOV
-        run: |
-          echo "== Checking LCOV report =="
-          ls -R front/coverage || echo "No coverage directory"
-          cat front/coverage/*/lcov.info | head -20 || echo "lcov.info missing"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
