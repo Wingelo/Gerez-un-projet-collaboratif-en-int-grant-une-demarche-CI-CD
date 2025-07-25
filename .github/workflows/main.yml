@@ -73,6 +73,18 @@ jobs:
           name: frontend-coverage
           path: front/coverage/bobapp/
 
+      - name: Check JaCoCo XML (Java)
+        run: |
+          echo "== Checking JaCoCo report =="
+          ls -R back/target/site/jacoco || echo "No JaCoCo directory"
+          cat back/target/site/jacoco/jacoco.xml | head -20 || echo "jacoco.xml missing"
+
+      - name: Check LCOV (Angular)
+        run: |
+          echo "== Checking LCOV report =="
+          ls -R front/coverage || echo "No coverage directory"
+          cat front/coverage/*/lcov.info | head -20 || echo "lcov.info missing"     
+
   sonarqube:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
