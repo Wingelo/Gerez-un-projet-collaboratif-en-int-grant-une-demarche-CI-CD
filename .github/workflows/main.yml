@@ -31,7 +31,7 @@ jobs:
           path: back/target/site/jacoco/jacoco.xml
 
   front:
-    name: Build & Test Frontend
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
