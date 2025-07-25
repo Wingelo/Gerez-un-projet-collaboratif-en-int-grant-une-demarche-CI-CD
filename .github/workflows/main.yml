@@ -8,37 +8,36 @@ on:
 
 jobs:
   back:
+    name: Backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Build and test backend with coverage
+      - name: Build and test backend with JaCoCo
         working-directory: back
-        run: mvn clean test
+        run: mvn clean test jacoco:report
 
-      - name: Debug backend build output
-        run: ls -R back/target
-
-      - name: Upload backend coverage report
+      - name: Upload backend coverage report (XML)
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: back/target/site/jacoco/
+          path: back/target/site/jacoco/jacoco.xml
 
   front:
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -47,31 +46,22 @@ jobs:
         working-directory: front
         run: npm ci
 
-      - name: Test front + coverage
+      - name: Run Angular tests + coverage
         working-directory: front
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libnss3 \
-            libxss1 \
-            libasound2t64 \
-            libx11-xcb1 \
-            libatk-bridge2.0-0 \
-            libgtk-3-0 \
-            libxcomposite1 \
-            libxcursor1 \
-            libxdamage1 \
-            libxi6 \
-            libgbm1 \
-            libpangocairo-1.0-0 \
-            libatspi2.0-0
+            libnss3 libxss1 libasound2 libx11-xcb1 \
+            libatk-bridge2.0-0 libgtk-3-0 libxcomposite1 \
+            libxcursor1 libxdamage1 libxi6 libgbm1 \
+            libpangocairo-1.0-0 libatspi2.0-0 libcups2
           npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
-      - name: Upload frontend coverage
+      - name: Upload frontend coverage (LCOV)
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: front/coverage/bobapp/
+          path: front/coverage/bobapp/lcov.info
 
   sonarqube:
     name: SonarCloud Analysis
@@ -83,13 +73,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Java
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: back/target/site/jacoco
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: front/coverage/bobapp
+
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Build backend (required for sonar.java.binaries)
+      - name: Compile backend (pour sonar.java.binaries)
         working-directory: back
         run: mvn -B compile
 
@@ -102,12 +104,15 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.sources=front/src,back/src/main
-            -Dsonar.exclusions=back/src/test/**
+            -Dsonar.sources=back/src/main,front/src
             -Dsonar.tests=back/src/test
-            -Dsonar.javascript.lcov.reportPaths=front/coverage/*/lcov.info
+            -Dsonar.test.inclusions=front/src/app/**/*.spec.ts
+            -Dsonar.exclusions=back/src/test/**
+            -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
+            -Dsonar.verbose=true
+
   docker:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
