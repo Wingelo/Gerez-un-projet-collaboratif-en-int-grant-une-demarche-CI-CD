@@ -95,6 +95,10 @@ jobs:
         working-directory: back
         run: mvn -B compile
 
+      - name: Copy backend dependencies for Sonar
+        working-directory: back
+        run: mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
@@ -111,6 +115,7 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=front/coverage/bobapp/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=back/target/site/jacoco/jacoco.xml
             -Dsonar.java.binaries=back/target/classes
+            -Dsonar.java.libraries=back/target/dependency/*.jar
             -Dsonar.verbose=true
 
   docker:
